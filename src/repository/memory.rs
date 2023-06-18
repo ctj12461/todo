@@ -3,7 +3,7 @@ use std::sync::Mutex;
 
 use crate::domain::entity::Item;
 
-use super::{AddError, RemoveError, Repository};
+use super::{AddError, GetError, RemoveError, Repository, SelectError};
 
 pub struct MemoryRepositry {
     items: Mutex<HashMap<u64, Item>>,
@@ -66,6 +66,59 @@ impl Repository for MemoryRepositry {
             Ok(item)
         } else {
             Err(RemoveError::NotFound)
+        }
+    }
+
+    fn get(&self, id: u64) -> Result<Item, GetError> {
+        let items = match self.items.lock() {
+            Ok(items) => items,
+            Err(err) => {
+                return Err(GetError::Other {
+                    message: err.to_string(),
+                })
+            }
+        };
+
+        if let Some(item) = items.get(&id) {
+            Ok(item.clone())
+        } else {
+            Err(GetError::NotFound)
+        }
+    }
+
+    fn select(
+        &self,
+        tags: crate::domain::entity::TagSet,
+        before: Option<chrono::NaiveDateTime>,
+        after: Option<chrono::NaiveDateTime>,
+    ) -> Result<Vec<Item>, SelectError> {
+        if before.is_some() && after.is_some() && before.unwrap() > after.unwrap() {
+            return Err(SelectError::Invalid);
+        }
+
+        let items = match self.items.lock() {
+            Ok(items) => items,
+            Err(err) => {
+                return Err(SelectError::Other {
+                    message: err.to_string(),
+                })
+            }
+        };
+
+        let mut res = items
+            .values()
+            .filter(|item| tags.is_subset(item.tags()))
+            .filter(|item| before.is_none() || *item.deadline() <= before.unwrap())
+            .filter(|item| after.is_none() || *item.deadline() >= after.unwrap())
+            .cloned()
+            .collect::<Vec<_>>();
+
+        res.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+
+        if !res.is_empty() {
+            Ok(res)
+        } else {
+            Err(SelectError::NotFound)
         }
     }
 }

@@ -105,9 +105,9 @@ impl Item {
 impl PartialOrd for Item {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        (&self.deadline, &self.priority, self.title.as_str()).partial_cmp(&(
+        (&self.deadline, &other.priority, self.title.as_str()).partial_cmp(&(
             &other.deadline,
-            &other.priority,
+            &self.priority,
             other.title.as_str(),
         ))
     }
