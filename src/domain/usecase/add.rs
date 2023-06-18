@@ -74,8 +74,7 @@ mod tests {
     fn it_should_return_an_id_when_creating_item_succeeded() {
         let title = String::from("Test");
         let description = String::from("This is description.");
-        let deadline =
-            NaiveDateTime::parse_from_str("2023-06-17 23:20:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let deadline = get_deadline();
         let tags = HashSet::new();
         let priority = 0i32;
 

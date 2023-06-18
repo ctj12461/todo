@@ -77,8 +77,8 @@ impl Item {
     }
 
     #[inline]
-    pub fn get_all_tags(&self) -> Vec<Tag> {
-        self.tags.iter().cloned().collect()
+    pub fn tags(&self) -> &TagSet {
+        &self.tags
     }
 
     #[inline]

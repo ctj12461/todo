@@ -3,7 +3,7 @@ use std::sync::Mutex;
 
 use crate::domain::entity::Item;
 
-use super::{AddError, Repository};
+use super::{AddError, RemoveError, Repository};
 
 pub struct MemoryRepositry {
     items: Mutex<HashMap<u64, Item>>,
@@ -20,6 +20,14 @@ impl MemoryRepositry {
 impl Default for MemoryRepositry {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl From<HashMap<u64, Item>> for MemoryRepositry {
+    fn from(value: HashMap<u64, Item>) -> Self {
+        Self {
+            items: Mutex::new(value),
+        }
     }
 }
 
@@ -41,6 +49,23 @@ impl Repository for MemoryRepositry {
             Ok(id)
         } else {
             Err(AddError::Conflict)
+        }
+    }
+
+    fn remove(&self, id: u64) -> Result<Item, RemoveError> {
+        let mut items = match self.items.lock() {
+            Ok(items) => items,
+            Err(err) => {
+                return Err(RemoveError::Other {
+                    message: err.to_string(),
+                })
+            }
+        };
+
+        if let Some(item) = items.remove(&id) {
+            Ok(item)
+        } else {
+            Err(RemoveError::NotFound)
         }
     }
 }
