@@ -20,8 +20,13 @@ impl Priority {
     }
 }
 
-impl From<i32> for Priority {
-    fn from(value: i32) -> Self {
-        Priority(value.clamp(Priority::MIN, Priority::MAX))
+impl TryFrom<i32> for Priority {
+    type Error = ();
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            Priority::MIN..=Priority::MAX => Ok(Priority(value)),
+            _ => Err(()),
+        }
     }
 }

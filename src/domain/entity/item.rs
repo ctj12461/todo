@@ -30,7 +30,6 @@ impl Item {
         title.hash(&mut hasher);
         description.hash(&mut hasher);
         deadline.hash(&mut hasher);
-        priority.value().hash(&mut hasher);
 
         Self {
             id: hasher.finish(),
@@ -40,6 +39,26 @@ impl Item {
             tags,
             priority,
         }
+    }
+
+    #[inline]
+    pub fn id(&self) -> u64 {
+        self.id
+    }
+
+    #[inline]
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+
+    #[inline]
+    pub fn description(&self) -> &str {
+        &self.description
+    }
+
+    #[inline]
+    pub fn deadline(&self) -> &NaiveDateTime {
+        &self.deadline
     }
 
     #[inline]

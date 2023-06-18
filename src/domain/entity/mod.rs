@@ -1,3 +1,7 @@
-pub mod item;
-pub mod priority;
-pub mod tag;
+mod item;
+mod priority;
+mod tag;
+
+pub use item::Item;
+pub use priority::Priority;
+pub use tag::{Tag, TagSet};
