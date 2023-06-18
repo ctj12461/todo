@@ -10,7 +10,7 @@ pub struct Request {
     pub id: u64,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Response {
     pub id: u64,
     pub title: String,
@@ -45,67 +45,40 @@ pub fn execute(repo: Arc<dyn Repository>, request: Request) -> Result<Response, 
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashMap;
 
-    use chrono::NaiveDateTime;
-
-    use crate::domain::entity::{Item, Priority};
+    use crate::domain::entity::Item;
     use crate::repository::MemoryRepositry;
 
     use super::*;
 
     #[test]
     fn it_should_return_the_corresponding_item_when_getting_item() {
-        let title = String::from("Test");
-        let description = String::from("This is description.");
-        let deadline = get_deadline();
-        let tags = HashSet::new();
-        let priority = Priority::try_from(0i32).unwrap();
-
-        let item = Item::new(
-            title.as_str(),
-            description.as_str(),
-            deadline,
-            tags.clone(),
-            priority.clone(),
-        );
-
+        let item = Item::new_test();
         let id = item.id();
 
         let mut map = HashMap::new();
-        let _ = map.insert(id, item);
+        let _ = map.insert(id, item.clone());
         let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::from(map));
 
         let request = Request { id };
         let res = execute(Arc::clone(&repo), request);
 
-        assert_eq!(
-            res,
-            Ok(Response {
-                id,
-                title: title.clone(),
-                description: description.clone(),
-                deadline,
-                tags: tags.clone(),
-                priority: priority.clone(),
-            })
-        );
+        let response = Response {
+            id,
+            title: item.title().to_owned(),
+            description: item.description().to_owned(),
+            deadline: *item.deadline(),
+            tags: item.tags().clone(),
+            priority: item.priority().clone(),
+        };
+
+        assert_eq!(res, Ok(response.clone()));
 
         // Do twice
         let request = Request { id };
         let res = execute(Arc::clone(&repo), request);
-
-        assert_eq!(
-            res,
-            Ok(Response {
-                id,
-                title,
-                description,
-                deadline,
-                tags,
-                priority,
-            })
-        );
+        assert_eq!(res, Ok(response));
     }
 
     #[test]
@@ -114,10 +87,5 @@ mod tests {
         let request = Request { id: 0u64 };
         let res = execute(Arc::clone(&repo), request);
         assert_eq!(res, Err(GetItemError::NotFound));
-    }
-
-    #[inline]
-    fn get_deadline() -> NaiveDateTime {
-        NaiveDateTime::parse_from_str("2023-06-17 23:20:00", "%Y-%m-%d %H:%M:%S").unwrap()
     }
 }

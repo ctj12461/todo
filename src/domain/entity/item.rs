@@ -41,6 +41,17 @@ impl Item {
         }
     }
 
+    #[cfg(test)]
+    pub fn new_test() -> Self {
+        Item::new(
+            "Test",
+            "This is description.",
+            NaiveDateTime::parse_from_str("2023-06-17 23:20:00", "%Y-%m-%d %H:%M:%S").unwrap(),
+            TagSet::new(),
+            0.try_into().unwrap(),
+        )
+    }
+
     #[inline]
     pub fn id(&self) -> u64 {
         self.id

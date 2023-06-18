@@ -45,35 +45,20 @@ pub fn execute(repo: Arc<dyn Repository>, request: Request) -> Result<Response, 
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashMap;
 
-    use chrono::NaiveDateTime;
-
-    use crate::domain::entity::{Item, Priority};
+    use crate::domain::entity::Item;
     use crate::repository::MemoryRepositry;
 
     use super::*;
 
     #[test]
     fn it_should_return_the_corresponding_item_when_removing_with_id() {
-        let title = String::from("Test");
-        let description = String::from("This is description.");
-        let deadline = get_deadline();
-        let tags = HashSet::new();
-        let priority = Priority::try_from(0i32).unwrap();
-
-        let item = Item::new(
-            title.as_str(),
-            description.as_str(),
-            deadline,
-            tags.clone(),
-            priority.clone(),
-        );
-
+        let item = Item::new_test();
         let id = item.id();
 
         let mut map = HashMap::new();
-        let _ = map.insert(id, item);
+        let _ = map.insert(id, item.clone());
         let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::from(map));
 
         let request = Request { id };
@@ -83,11 +68,11 @@ mod tests {
             res,
             Ok(Response {
                 id,
-                title,
-                description,
-                deadline,
-                tags,
-                priority,
+                title: item.title().to_owned(),
+                description: item.description().to_owned(),
+                deadline: *item.deadline(),
+                tags: item.tags().clone(),
+                priority: item.priority().clone(),
             })
         );
     }
@@ -98,10 +83,5 @@ mod tests {
         let request = Request { id: 0u64 };
         let res = execute(Arc::clone(&repo), request);
         assert_eq!(res, Err(RemoveItemError::NotFound));
-    }
-
-    #[inline]
-    fn get_deadline() -> NaiveDateTime {
-        NaiveDateTime::parse_from_str("2023-06-17 23:20:00", "%Y-%m-%d %H:%M:%S").unwrap()
     }
 }

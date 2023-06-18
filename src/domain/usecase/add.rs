@@ -62,9 +62,7 @@ pub fn execute(repo: Arc<dyn Repository>, request: Request) -> Result<Response, 
 
 #[cfg(test)]
 mod tests {
-    use std::collections::hash_map::DefaultHasher;
     use std::collections::HashSet;
-    use std::hash::{Hash, Hasher};
 
     use crate::repository::MemoryRepositry;
 
@@ -72,24 +70,15 @@ mod tests {
 
     #[test]
     fn it_should_return_an_id_when_creating_item_succeeded() {
-        let title = String::from("Test");
-        let description = String::from("This is description.");
-        let deadline = get_deadline();
-        let tags = HashSet::new();
-        let priority = 0i32;
-
-        let mut hasher = DefaultHasher::new();
-        title.hash(&mut hasher);
-        description.hash(&mut hasher);
-        deadline.hash(&mut hasher);
-        let id = hasher.finish();
+        let item = Item::new_test();
+        let id = item.id();
 
         let request = Request {
-            title,
-            description,
-            deadline,
-            tags,
-            priority,
+            title: item.title().to_owned(),
+            description: item.description().to_owned(),
+            deadline: *item.deadline(),
+            tags: item.tags().clone(),
+            priority: item.priority().value(),
         };
 
         let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::new());
