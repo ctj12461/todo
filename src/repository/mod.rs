@@ -18,6 +18,10 @@ pub trait Repository: Send + Sync {
         before: Option<NaiveDateTime>,
         after: Option<NaiveDateTime>,
     ) -> Result<Vec<Item>, SelectError>;
+
+    fn add_tag(&self, id: u64, tags: TagSet) -> Result<(), AddTagError>;
+
+    fn remove_tag(&self, id: u64, tags: TagSet) -> Result<(), RemoveTagError>;
 }
 
 pub enum AddError {
@@ -38,5 +42,18 @@ pub enum GetError {
 pub enum SelectError {
     Invalid,
     NotFound,
+    Other { message: String },
+}
+
+pub enum AddTagError {
+    NotFound,
+    Conflict,
+    Other { message: String },
+}
+
+pub enum RemoveTagError {
+    ItemNotFound,
+    TagNotFound,
+    Conflict,
     Other { message: String },
 }

@@ -1,9 +1,11 @@
 use std::collections::hash_map::{Entry, HashMap};
 use std::sync::Mutex;
 
-use crate::domain::entity::Item;
+use crate::domain::entity::{Item, TagSet};
 
-use super::{AddError, GetError, RemoveError, Repository, SelectError};
+use super::{
+    AddError, AddTagError, GetError, RemoveError, RemoveTagError, Repository, SelectError,
+};
 
 pub struct MemoryRepositry {
     items: Mutex<HashMap<u64, Item>>,
@@ -88,7 +90,7 @@ impl Repository for MemoryRepositry {
 
     fn select(
         &self,
-        tags: crate::domain::entity::TagSet,
+        tags: TagSet,
         before: Option<chrono::NaiveDateTime>,
         after: Option<chrono::NaiveDateTime>,
     ) -> Result<Vec<Item>, SelectError> {
@@ -119,6 +121,52 @@ impl Repository for MemoryRepositry {
             Ok(res)
         } else {
             Err(SelectError::NotFound)
+        }
+    }
+
+    fn add_tag(&self, id: u64, tags: TagSet) -> Result<(), AddTagError> {
+        let mut items = match self.items.lock() {
+            Ok(items) => items,
+            Err(err) => {
+                return Err(AddTagError::Other {
+                    message: err.to_string(),
+                })
+            }
+        };
+
+        if let Some(item) = items.get_mut(&id) {
+            let not_existed = tags.into_iter().map(|tag| item.add_tag(tag)).all(|v| v);
+
+            if not_existed {
+                Ok(())
+            } else {
+                Err(AddTagError::Conflict)
+            }
+        } else {
+            Err(AddTagError::NotFound)
+        }
+    }
+
+    fn remove_tag(&self, id: u64, tags: TagSet) -> Result<(), RemoveTagError> {
+        let mut items = match self.items.lock() {
+            Ok(items) => items,
+            Err(err) => {
+                return Err(RemoveTagError::Other {
+                    message: err.to_string(),
+                })
+            }
+        };
+
+        if let Some(item) = items.get_mut(&id) {
+            let all_existed = tags.into_iter().map(|tag| item.remove_tag(&tag)).all(|v| v);
+
+            if all_existed {
+                Ok(())
+            } else {
+                Err(RemoveTagError::TagNotFound)
+            }
+        } else {
+            Err(RemoveTagError::ItemNotFound)
         }
     }
 }

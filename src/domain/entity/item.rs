@@ -73,13 +73,13 @@ impl Item {
     }
 
     #[inline]
-    pub fn add_tag(&mut self, tag: &Tag) {
-        self.tags.insert(tag.clone());
+    pub fn add_tag(&mut self, tag: Tag) -> bool {
+        self.tags.insert(tag)
     }
 
     #[inline]
-    pub fn remove_tag(&mut self, tag: &Tag) {
-        self.tags.remove(tag);
+    pub fn remove_tag(&mut self, tag: &Tag) -> bool {
+        self.tags.remove(tag)
     }
 
     #[inline]
