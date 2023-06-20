@@ -1,8 +1,9 @@
 mod memory;
 
-use crate::domain::entity::{Item, TagSet};
+use crate::domain::entity::{Item, Priority, TagSet};
 
 use chrono::NaiveDateTime;
+
 pub use memory::MemoryRepositry;
 
 pub trait Repository: Send + Sync {
@@ -22,6 +23,8 @@ pub trait Repository: Send + Sync {
     fn add_tag(&self, id: u64, tags: TagSet) -> Result<(), AddTagError>;
 
     fn remove_tag(&self, id: u64, tags: TagSet) -> Result<(), RemoveTagError>;
+
+    fn set_priority(&self, id: u64, priority: Priority) -> Result<(), SetPriorityError>;
 }
 
 pub enum AddError {
@@ -55,5 +58,10 @@ pub enum RemoveTagError {
     ItemNotFound,
     TagNotFound,
     Conflict,
+    Other { message: String },
+}
+
+pub enum SetPriorityError {
+    NotFound,
     Other { message: String },
 }

@@ -1,10 +1,11 @@
 use std::collections::hash_map::{Entry, HashMap};
 use std::sync::Mutex;
 
-use crate::domain::entity::{Item, TagSet};
+use crate::domain::entity::{Item, Priority, TagSet};
 
 use super::{
     AddError, AddTagError, GetError, RemoveError, RemoveTagError, Repository, SelectError,
+    SetPriorityError,
 };
 
 pub struct MemoryRepositry {
@@ -167,6 +168,24 @@ impl Repository for MemoryRepositry {
             }
         } else {
             Err(RemoveTagError::ItemNotFound)
+        }
+    }
+
+    fn set_priority(&self, id: u64, priority: Priority) -> Result<(), SetPriorityError> {
+        let mut items = match self.items.lock() {
+            Ok(items) => items,
+            Err(err) => {
+                return Err(SetPriorityError::Other {
+                    message: err.to_string(),
+                })
+            }
+        };
+
+        if let Some(item) = items.get_mut(&id) {
+            item.set_priority(priority);
+            Ok(())
+        } else {
+            Err(SetPriorityError::NotFound)
         }
     }
 }

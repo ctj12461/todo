@@ -98,18 +98,13 @@ impl Item {
     }
 
     #[inline]
-    pub fn upgrade(&mut self) {
-        self.priority.upgrade();
-    }
-
-    #[inline]
-    pub fn downgrade(&mut self) {
-        self.priority.downgrade();
-    }
-
-    #[inline]
     pub fn priority(&self) -> &Priority {
         &self.priority
+    }
+
+    #[inline]
+    pub fn set_priority(&mut self, priority: Priority) {
+        self.priority = priority;
     }
 }
 
