@@ -16,10 +16,10 @@ jobs:
       run: rustup component add rustfmt clippy
 
     - name: Check
-      run: cargo check
+      run: RUST_BACKTRACE=1 cargo check
 
     - name: Test
-      run: cargo test
+      run: RUST_BACKTRACE=1 cargo test
   
     - name: Format
       run: cargo fmt --all -- --check
