@@ -136,7 +136,13 @@ impl Repository for MemoryRepositry {
         };
 
         if let Some(item) = items.get_mut(&id) {
-            let not_existed = tags.into_iter().map(|tag| item.add_tag(tag)).all(|v| v);
+            let mut not_existed = true;
+
+            for tag in tags.into_iter() {
+                if !item.add_tag(tag) {
+                    not_existed = false;
+                }
+            }
 
             if not_existed {
                 Ok(())
@@ -159,7 +165,13 @@ impl Repository for MemoryRepositry {
         };
 
         if let Some(item) = items.get_mut(&id) {
-            let all_existed = tags.into_iter().map(|tag| item.remove_tag(&tag)).all(|v| v);
+            let mut all_existed = true;
+
+            for tag in tags {
+                if !item.remove_tag(&tag) {
+                    all_existed = false;
+                }
+            }
 
             if all_existed {
                 Ok(())
