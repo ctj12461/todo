@@ -18,6 +18,13 @@ impl MemoryRepositry {
             items: Mutex::new(HashMap::new()),
         }
     }
+
+    pub fn clone_inner(&self) -> Result<HashMap<u64, Item>, String> {
+        self.items
+            .lock()
+            .map(|items| items.clone())
+            .map_err(|err| err.to_string())
+    }
 }
 
 impl Default for MemoryRepositry {

@@ -1,9 +1,11 @@
-mod memory;
+pub mod local;
+pub mod memory;
 
 use crate::domain::entity::{Item, Priority, TagSet};
 
 use chrono::NaiveDateTime;
 
+pub use local::LocalRepository;
 pub use memory::MemoryRepositry;
 
 pub trait Repository: Send + Sync {
