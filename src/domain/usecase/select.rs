@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
 use chrono::NaiveDateTime;
 use snafu::prelude::*;
 
 use crate::domain::entity::{Item, TagSet};
-use crate::repository::{Repository, SelectError};
+use crate::repository::item::{Pool, SelectError};
 
 pub struct Request {
     tags: TagSet,
@@ -23,27 +21,23 @@ pub enum SelectItemError {
     Invalid,
     #[snafu(display("No suitable item is found"))]
     NotFound,
-    #[snafu(display("{message}"))]
-    Other { message: String },
 }
 
-pub fn execute(repo: Arc<dyn Repository>, request: Request) -> Result<Response, SelectItemError> {
+pub fn execute(repo: &dyn Pool, request: Request) -> Result<Response, SelectItemError> {
     match repo.select(request.tags, request.before, request.after) {
         Ok(items) => Ok(Response { items }),
         Err(SelectError::Invalid) => Err(SelectItemError::Invalid),
         Err(SelectError::NotFound) => Err(SelectItemError::NotFound),
-        Err(SelectError::Other { message }) => Err(SelectItemError::Other { message }),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use std::sync::Arc;
 
     use chrono::NaiveDateTime;
 
-    use crate::repository::MemoryRepositry;
+    use crate::repository::item::MemoryPool;
 
     use super::*;
 
@@ -57,7 +51,7 @@ mod tests {
         add(&mut m, new("5", "2023-06-18 3:51:00", 1, &["a", "c"]));
         add(&mut m, new("6", "2023-06-18 3:51:00", 0, &["b", "c"]));
         add(&mut m, new("7", "2023-06-18 3:51:00", 0, &["a", "b", "c"]));
-        let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::from(m));
+        let repo: Box<dyn Pool> = Box::new(MemoryPool::from(m));
 
         let tags = ["a", "b"].iter().map(|&t| t.to_owned()).collect();
 
@@ -67,7 +61,7 @@ mod tests {
             after: None,
         };
 
-        let res = execute(Arc::clone(&repo), request);
+        let res = execute(repo.as_ref(), request);
 
         assert_eq!(
             res,
@@ -87,7 +81,7 @@ mod tests {
         add(&mut m, new("2", "2023-06-18 3:51:01", 2, &["b"]));
         add(&mut m, new("3", "2023-06-18 3:51:00", 2, &[]));
 
-        let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::from(m));
+        let repo: Box<dyn Pool> = Box::new(MemoryPool::from(m));
 
         let request = Request {
             tags: TagSet::new(),
@@ -95,7 +89,7 @@ mod tests {
             after: None,
         };
 
-        let res = execute(Arc::clone(&repo), request);
+        let res = execute(repo.as_ref(), request);
 
         assert_eq!(
             res,
@@ -116,7 +110,7 @@ mod tests {
         add(&mut m, new("2", "2023-06-18 3:51:01", 2, &["b"]));
         add(&mut m, new("3", "2023-06-18 3:51:00", 2, &["c"]));
 
-        let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::from(m));
+        let repo: Box<dyn Pool> = Box::new(MemoryPool::from(m));
 
         let time = "2023-06-18 3:50:00";
 
@@ -126,7 +120,7 @@ mod tests {
             after: None,
         };
 
-        let res = execute(Arc::clone(&repo), request);
+        let res = execute(repo.as_ref(), request);
         assert_eq!(res, Err(SelectItemError::NotFound));
     }
 
@@ -137,7 +131,7 @@ mod tests {
         add(&mut m, new("2", "2023-06-18 3:51:01", 2, &["b"]));
         add(&mut m, new("3", "2023-06-18 3:51:00", 2, &["c"]));
 
-        let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::from(m));
+        let repo: Box<dyn Pool> = Box::new(MemoryPool::from(m));
 
         let tags = ["d"].iter().map(|&t| t.to_owned()).collect();
 
@@ -147,7 +141,7 @@ mod tests {
             after: None,
         };
 
-        let res = execute(Arc::clone(&repo), request);
+        let res = execute(repo.as_ref(), request);
         assert_eq!(res, Err(SelectItemError::NotFound));
     }
 

@@ -1,9 +1,7 @@
-use std::sync::Arc;
-
 use snafu::prelude::*;
 
 use crate::domain::entity::TagSet;
-use crate::repository::{AddTagError as RepositoryError, Repository};
+use crate::repository::item::{AddTagError as RepositoryError, Pool};
 
 pub struct Request {
     pub id: u64,
@@ -16,16 +14,13 @@ pub enum AddTagError {
     NotFound,
     #[snafu(display("Some tags have already existed"))]
     Conflict,
-    #[snafu(display("{message}"))]
-    Other { message: String },
 }
 
-pub fn execute(repo: Arc<dyn Repository>, request: Request) -> Result<(), AddTagError> {
+pub fn execute(repo: &mut dyn Pool, request: Request) -> Result<(), AddTagError> {
     match repo.add_tag(request.id, request.tags) {
         Ok(()) => Ok(()),
         Err(RepositoryError::Conflict) => Err(AddTagError::Conflict),
         Err(RepositoryError::NotFound) => Err(AddTagError::NotFound),
-        Err(RepositoryError::Other { message }) => Err(AddTagError::Other { message }),
     }
 }
 
@@ -34,7 +29,7 @@ mod tests {
     use std::collections::HashMap;
 
     use crate::domain::entity::Item;
-    use crate::repository::MemoryRepositry;
+    use crate::repository::item::MemoryPool;
 
     use super::*;
 
@@ -45,14 +40,14 @@ mod tests {
 
         let mut map = HashMap::new();
         let _ = map.insert(id, item);
-        let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::from(map));
+        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::from(map));
 
         let mut tags = TagSet::new();
         tags.insert("a".to_owned());
         tags.insert("b".to_owned());
 
         let request = Request { id, tags };
-        let res = execute(Arc::clone(&repo), request);
+        let res = execute(repo.as_mut(), request);
 
         assert_eq!(res, Ok(()));
 
@@ -72,14 +67,14 @@ mod tests {
 
         let mut map = HashMap::new();
         let _ = map.insert(id, item);
-        let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::from(map));
+        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::from(map));
 
         let mut tags = TagSet::new();
         tags.insert("a".to_owned());
         tags.insert("b".to_owned());
 
         let request = Request { id, tags };
-        let res = execute(Arc::clone(&repo), request);
+        let res = execute(repo.as_mut(), request);
 
         assert_eq!(res, Err(AddTagError::Conflict));
 
@@ -93,14 +88,14 @@ mod tests {
 
     #[test]
     fn it_should_return_not_found_error_when_target_is_not_found() {
-        let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::new());
+        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
 
         let request = Request {
             id: 0,
             tags: TagSet::new(),
         };
 
-        let res = execute(Arc::clone(&repo), request);
+        let res = execute(repo.as_mut(), request);
         assert_eq!(res, Err(AddTagError::NotFound));
     }
 }

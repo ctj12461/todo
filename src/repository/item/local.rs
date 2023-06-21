@@ -10,10 +10,10 @@ use serde_json::Error as SerdeError;
 use snafu::prelude::*;
 
 use crate::domain::entity::{Item, Priority, TagSet};
-use crate::repository::memory::MemoryRepositry;
+use crate::repository::item::memory::MemoryPool;
 
 use super::{
-    AddError, AddTagError, GetError, RemoveError, RemoveTagError, Repository, SelectError,
+    AddError, AddTagError, GetError, Pool, RemoveError, RemoveTagError, SelectError,
     SetPriorityError,
 };
 
@@ -31,8 +31,8 @@ struct Data {
     items: HashSet<RawItem>,
 }
 
-pub struct LocalRepository {
-    repo: MemoryRepositry,
+pub struct LocalPool {
+    repo: MemoryPool,
     path: PathBuf,
 }
 
@@ -56,8 +56,6 @@ pub enum SyncError {
     Open { source: IoError },
     #[snafu(display("Failed to write items: {source}"))]
     Write { source: IoError },
-    #[snafu(display("{message}"))]
-    Other { message: String },
 }
 
 impl Hash for RawItem {
@@ -112,13 +110,13 @@ impl From<HashMap<u64, Item>> for Data {
     }
 }
 
-impl LocalRepository {
+impl LocalPool {
     pub fn open(path: PathBuf) -> Result<Self, InitError> {
         let json = Self::read_file(path.clone())?;
         let data = Self::deserialize(json)?;
 
         Ok(Self {
-            repo: MemoryRepositry::from(HashMap::from(data)),
+            repo: MemoryPool::from(HashMap::from(data)),
             path,
         })
     }
@@ -151,12 +149,7 @@ impl LocalRepository {
     }
 
     pub fn sync(&self) -> Result<(), SyncError> {
-        let data: Data = self
-            .repo
-            .clone_inner()
-            .map(|items| items.into())
-            .map_err(|err| SyncError::Other { message: err })?;
-
+        let data: Data = self.repo.clone_inner().into();
         let json = Self::serialize(data)?;
         Self::sync_file(self.path.clone(), json)
     }
@@ -177,7 +170,7 @@ impl LocalRepository {
     }
 }
 
-impl Drop for LocalRepository {
+impl Drop for LocalPool {
     fn drop(&mut self) {
         if let Err(err) = self.sync() {
             panic!("{err}");
@@ -185,12 +178,12 @@ impl Drop for LocalRepository {
     }
 }
 
-impl Repository for LocalRepository {
-    fn add(&self, item: Item) -> Result<u64, AddError> {
+impl Pool for LocalPool {
+    fn add(&mut self, item: Item) -> Result<u64, AddError> {
         self.repo.add(item)
     }
 
-    fn remove(&self, id: u64) -> Result<Item, RemoveError> {
+    fn remove(&mut self, id: u64) -> Result<Item, RemoveError> {
         self.repo.remove(id)
     }
 
@@ -207,15 +200,15 @@ impl Repository for LocalRepository {
         self.repo.select(tags, before, after)
     }
 
-    fn add_tag(&self, id: u64, tags: TagSet) -> Result<(), AddTagError> {
+    fn add_tag(&mut self, id: u64, tags: TagSet) -> Result<(), AddTagError> {
         self.repo.add_tag(id, tags)
     }
 
-    fn remove_tag(&self, id: u64, tags: TagSet) -> Result<(), RemoveTagError> {
+    fn remove_tag(&mut self, id: u64, tags: TagSet) -> Result<(), RemoveTagError> {
         self.repo.remove_tag(id, tags)
     }
 
-    fn set_priority(&self, id: u64, priority: Priority) -> Result<(), SetPriorityError> {
+    fn set_priority(&mut self, id: u64, priority: Priority) -> Result<(), SetPriorityError> {
         self.repo.set_priority(id, priority)
     }
 }
@@ -253,7 +246,7 @@ mod tests {
         })
         .to_string();
 
-        if let Ok(data) = LocalRepository::deserialize(json) {
+        if let Ok(data) = LocalPool::deserialize(json) {
             let items = [
                 RawItem {
                     title: "1".to_owned(),
@@ -287,7 +280,7 @@ mod tests {
 
     #[test]
     fn it_should_return_a_empty_hash_set_when_deserializing_from_a_empty_string() {
-        if let Ok(data) = LocalRepository::deserialize(String::new()) {
+        if let Ok(data) = LocalPool::deserialize(String::new()) {
             assert_eq!(
                 data,
                 Data {
@@ -312,7 +305,7 @@ mod tests {
         .to_string();
 
         assert!(matches!(
-            LocalRepository::deserialize(json),
+            LocalPool::deserialize(json),
             Err(InitError::Invalid { source: _ })
         ));
     }

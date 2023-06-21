@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
 use chrono::prelude::*;
 use snafu::prelude::*;
 
 use crate::domain::entity::{Item, Priority, TagSet};
-use crate::repository::{AddError, Repository};
+use crate::repository::item::{AddError, Pool};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
@@ -26,11 +24,9 @@ pub enum AddItemError {
     Invalid,
     #[snafu(display("Two same items may not exist"))]
     Conflict,
-    #[snafu(display("{message}"))]
-    Other { message: String },
 }
 
-pub fn execute(repo: Arc<dyn Repository>, request: Request) -> Result<Response, AddItemError> {
+pub fn execute(repo: &mut dyn Pool, request: Request) -> Result<Response, AddItemError> {
     let Request {
         title,
         description,
@@ -56,7 +52,6 @@ pub fn execute(repo: Arc<dyn Repository>, request: Request) -> Result<Response, 
     match res {
         Ok(id) => Ok(Response { id }),
         Err(AddError::Conflict) => Err(AddItemError::Conflict),
-        Err(AddError::Other { message }) => Err(AddItemError::Other { message }),
     }
 }
 
@@ -64,7 +59,7 @@ pub fn execute(repo: Arc<dyn Repository>, request: Request) -> Result<Response, 
 mod tests {
     use std::collections::HashSet;
 
-    use crate::repository::MemoryRepositry;
+    use crate::repository::item::MemoryPool;
 
     use super::*;
 
@@ -81,8 +76,8 @@ mod tests {
             priority: item.priority().value(),
         };
 
-        let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::new());
-        let res = execute(repo, request);
+        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
+        let res = execute(repo.as_mut(), request);
         assert_eq!(res, Ok(Response { id }));
     }
 
@@ -96,8 +91,8 @@ mod tests {
             priority: 0i32,
         };
 
-        let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::new());
-        let res = execute(repo, request);
+        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
+        let res = execute(repo.as_mut(), request);
         assert_eq!(res, Err(AddItemError::Invalid));
     }
 
@@ -111,8 +106,8 @@ mod tests {
             priority: 10i32,
         };
 
-        let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::new());
-        let res = execute(repo, request);
+        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
+        let res = execute(repo.as_mut(), request);
         assert_eq!(res, Err(AddItemError::Invalid));
     }
 
@@ -126,9 +121,9 @@ mod tests {
             priority: 0i32,
         };
 
-        let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::new());
-        let _ = execute(Arc::clone(&repo), request.clone());
-        let res = execute(repo, request);
+        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
+        let _ = execute(repo.as_mut(), request.clone());
+        let res = execute(repo.as_mut(), request);
         assert_eq!(res, Err(AddItemError::Conflict));
     }
 

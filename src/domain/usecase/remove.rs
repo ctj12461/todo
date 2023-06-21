@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
 use chrono::NaiveDateTime;
 use snafu::prelude::*;
 
 use crate::domain::entity::{Priority, TagSet};
-use crate::repository::{RemoveError, Repository};
+use crate::repository::item::{Pool, RemoveError};
 
 pub struct Request {
     pub id: u64,
@@ -24,11 +22,9 @@ pub struct Response {
 pub enum RemoveItemError {
     #[snafu(display("Target isn't found"))]
     NotFound,
-    #[snafu(display("{message}"))]
-    Other { message: String },
 }
 
-pub fn execute(repo: Arc<dyn Repository>, request: Request) -> Result<Response, RemoveItemError> {
+pub fn execute(repo: &mut dyn Pool, request: Request) -> Result<Response, RemoveItemError> {
     match repo.remove(request.id) {
         Ok(item) => Ok(Response {
             id: item.id(),
@@ -39,7 +35,6 @@ pub fn execute(repo: Arc<dyn Repository>, request: Request) -> Result<Response, 
             priority: item.priority().clone(),
         }),
         Err(RemoveError::NotFound) => Err(RemoveItemError::NotFound),
-        Err(RemoveError::Other { message }) => Err(RemoveItemError::Other { message }),
     }
 }
 
@@ -48,7 +43,7 @@ mod tests {
     use std::collections::HashMap;
 
     use crate::domain::entity::Item;
-    use crate::repository::MemoryRepositry;
+    use crate::repository::item::MemoryPool;
 
     use super::*;
 
@@ -59,10 +54,10 @@ mod tests {
 
         let mut map = HashMap::new();
         let _ = map.insert(id, item.clone());
-        let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::from(map));
+        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::from(map));
 
         let request = Request { id };
-        let res = execute(Arc::clone(&repo), request);
+        let res = execute(repo.as_mut(), request);
 
         assert_eq!(
             res,
@@ -79,9 +74,9 @@ mod tests {
 
     #[test]
     fn it_should_return_not_found_error_when_the_target_does_not_exist() {
-        let repo: Arc<dyn Repository> = Arc::new(MemoryRepositry::new());
+        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
         let request = Request { id: 0u64 };
-        let res = execute(Arc::clone(&repo), request);
+        let res = execute(repo.as_mut(), request);
         assert_eq!(res, Err(RemoveItemError::NotFound));
     }
 }
