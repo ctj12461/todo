@@ -5,3 +5,6 @@ pub mod remove;
 pub mod remove_tag;
 pub mod select;
 pub mod set_priority;
+
+pub mod add_id;
+pub mod remove_id;
