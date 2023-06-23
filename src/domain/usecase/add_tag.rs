@@ -16,8 +16,8 @@ pub enum AddTagError {
     Conflict,
 }
 
-pub fn execute(repo: &mut dyn Pool, request: Request) -> Result<(), AddTagError> {
-    match repo.add_tag(request.id, request.tags) {
+pub fn execute(pool: &mut dyn Pool, request: Request) -> Result<(), AddTagError> {
+    match pool.add_tag(request.id, request.tags) {
         Ok(()) => Ok(()),
         Err(RepositoryError::Conflict) => Err(AddTagError::Conflict),
         Err(RepositoryError::NotFound) => Err(AddTagError::NotFound),
@@ -40,18 +40,18 @@ mod tests {
 
         let mut map = HashMap::new();
         let _ = map.insert(id, item);
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::from(map));
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::from(map));
 
         let mut tags = TagSet::new();
         tags.insert("a".to_owned());
         tags.insert("b".to_owned());
 
         let request = Request { id, tags };
-        let res = execute(repo.as_mut(), request);
+        let res = execute(pool.as_mut(), request);
 
         assert_eq!(res, Ok(()));
 
-        if let Ok(item) = repo.get(id) {
+        if let Ok(item) = pool.get(id) {
             assert!(item.find_tag(&"a".to_owned()));
             assert!(item.find_tag(&"b".to_owned()));
         } else {
@@ -67,18 +67,18 @@ mod tests {
 
         let mut map = HashMap::new();
         let _ = map.insert(id, item);
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::from(map));
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::from(map));
 
         let mut tags = TagSet::new();
         tags.insert("a".to_owned());
         tags.insert("b".to_owned());
 
         let request = Request { id, tags };
-        let res = execute(repo.as_mut(), request);
+        let res = execute(pool.as_mut(), request);
 
         assert_eq!(res, Err(AddTagError::Conflict));
 
-        if let Ok(item) = repo.get(id) {
+        if let Ok(item) = pool.get(id) {
             assert!(item.find_tag(&"a".to_owned()));
             assert!(item.find_tag(&"b".to_owned()));
         } else {
@@ -88,14 +88,14 @@ mod tests {
 
     #[test]
     fn it_should_return_not_found_error_when_target_is_not_found() {
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::new());
 
         let request = Request {
             id: 0,
             tags: TagSet::new(),
         };
 
-        let res = execute(repo.as_mut(), request);
+        let res = execute(pool.as_mut(), request);
         assert_eq!(res, Err(AddTagError::NotFound));
     }
 }

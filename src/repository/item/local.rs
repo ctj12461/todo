@@ -32,7 +32,7 @@ struct Data {
 }
 
 pub struct LocalPool {
-    repo: MemoryPool,
+    pool: MemoryPool,
     path: PathBuf,
 }
 
@@ -116,7 +116,7 @@ impl LocalPool {
         let data = Self::deserialize(json)?;
 
         Ok(Self {
-            repo: MemoryPool::from(HashMap::from(data)),
+            pool: MemoryPool::from(HashMap::from(data)),
             path,
         })
     }
@@ -149,7 +149,7 @@ impl LocalPool {
     }
 
     pub fn sync(&self) -> Result<(), SyncError> {
-        let data: Data = self.repo.clone_inner().into();
+        let data: Data = self.pool.clone_inner().into();
         let json = Self::serialize(data)?;
         Self::sync_file(self.path.clone(), json)
     }
@@ -180,15 +180,15 @@ impl Drop for LocalPool {
 
 impl Pool for LocalPool {
     fn add(&mut self, item: Item) -> Result<u64, AddError> {
-        self.repo.add(item)
+        self.pool.add(item)
     }
 
     fn remove(&mut self, id: u64) -> Result<Item, RemoveError> {
-        self.repo.remove(id)
+        self.pool.remove(id)
     }
 
     fn get(&self, id: u64) -> Result<Item, GetError> {
-        self.repo.get(id)
+        self.pool.get(id)
     }
 
     fn select(
@@ -197,19 +197,19 @@ impl Pool for LocalPool {
         before: Option<NaiveDateTime>,
         after: Option<NaiveDateTime>,
     ) -> Result<Vec<Item>, SelectError> {
-        self.repo.select(tags, before, after)
+        self.pool.select(tags, before, after)
     }
 
     fn add_tag(&mut self, id: u64, tags: TagSet) -> Result<(), AddTagError> {
-        self.repo.add_tag(id, tags)
+        self.pool.add_tag(id, tags)
     }
 
     fn remove_tag(&mut self, id: u64, tags: TagSet) -> Result<(), RemoveTagError> {
-        self.repo.remove_tag(id, tags)
+        self.pool.remove_tag(id, tags)
     }
 
     fn set_priority(&mut self, id: u64, priority: Priority) -> Result<(), SetPriorityError> {
-        self.repo.set_priority(id, priority)
+        self.pool.set_priority(id, priority)
     }
 }
 

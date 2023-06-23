@@ -18,8 +18,8 @@ pub enum RemoveTagError {
     Conflict,
 }
 
-pub fn execute(repo: &mut dyn Pool, request: Request) -> Result<(), RemoveTagError> {
-    match repo.remove_tag(request.id, request.tags) {
+pub fn execute(pool: &mut dyn Pool, request: Request) -> Result<(), RemoveTagError> {
+    match pool.remove_tag(request.id, request.tags) {
         Ok(()) => Ok(()),
         Err(RepositoryError::Conflict) => Err(RemoveTagError::Conflict),
         Err(RepositoryError::ItemNotFound) => Err(RemoveTagError::ItemNotFound),
@@ -45,14 +45,14 @@ mod tests {
 
         let mut map = HashMap::new();
         let _ = map.insert(id, item);
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::from(map));
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::from(map));
 
         let tags = ["a", "b"].iter().map(|&s| s.to_owned()).collect();
         let request = Request { id, tags };
-        let res = execute(repo.as_mut(), request);
+        let res = execute(pool.as_mut(), request);
         assert_eq!(res, Ok(()));
 
-        if let Ok(item) = repo.get(id) {
+        if let Ok(item) = pool.get(id) {
             assert!(!item.find_tag(&"a".to_owned()));
             assert!(!item.find_tag(&"b".to_owned()));
         } else {
@@ -69,24 +69,24 @@ mod tests {
 
         let mut map = HashMap::new();
         let _ = map.insert(id, item);
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::from(map));
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::from(map));
 
         let tags = ["c", "d"].iter().map(|&s| s.to_owned()).collect();
         let request = Request { id, tags };
-        let res = execute(repo.as_mut(), request);
+        let res = execute(pool.as_mut(), request);
         assert_eq!(res, Err(RemoveTagError::TagNotFound));
     }
 
     #[test]
     fn it_should_return_item_not_found_error_when_the_target_does_not_exist() {
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::new());
 
         let request = Request {
             id: 0,
             tags: TagSet::new(),
         };
 
-        let res = execute(repo.as_mut(), request);
+        let res = execute(pool.as_mut(), request);
         assert_eq!(res, Err(RemoveTagError::ItemNotFound));
     }
 }

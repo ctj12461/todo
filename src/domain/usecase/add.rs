@@ -26,7 +26,7 @@ pub enum AddItemError {
     Conflict,
 }
 
-pub fn execute(repo: &mut dyn Pool, request: Request) -> Result<Response, AddItemError> {
+pub fn execute(pool: &mut dyn Pool, request: Request) -> Result<Response, AddItemError> {
     let Request {
         title,
         description,
@@ -41,7 +41,7 @@ pub fn execute(repo: &mut dyn Pool, request: Request) -> Result<Response, AddIte
         Err(()) => return Err(AddItemError::Invalid),
     };
 
-    let res = repo.add(Item::new(
+    let res = pool.add(Item::new(
         title.as_str(),
         description.as_str(),
         deadline,
@@ -76,8 +76,8 @@ mod tests {
             priority: item.priority().value(),
         };
 
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
-        let res = execute(repo.as_mut(), request);
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::new());
+        let res = execute(pool.as_mut(), request);
         assert_eq!(res, Ok(Response { id }));
     }
 
@@ -91,8 +91,8 @@ mod tests {
             priority: 0i32,
         };
 
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
-        let res = execute(repo.as_mut(), request);
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::new());
+        let res = execute(pool.as_mut(), request);
         assert_eq!(res, Err(AddItemError::Invalid));
     }
 
@@ -106,8 +106,8 @@ mod tests {
             priority: 10i32,
         };
 
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
-        let res = execute(repo.as_mut(), request);
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::new());
+        let res = execute(pool.as_mut(), request);
         assert_eq!(res, Err(AddItemError::Invalid));
     }
 
@@ -121,9 +121,9 @@ mod tests {
             priority: 0i32,
         };
 
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
-        let _ = execute(repo.as_mut(), request.clone());
-        let res = execute(repo.as_mut(), request);
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::new());
+        let _ = execute(pool.as_mut(), request.clone());
+        let res = execute(pool.as_mut(), request);
         assert_eq!(res, Err(AddItemError::Conflict));
     }
 

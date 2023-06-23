@@ -24,8 +24,8 @@ pub enum RemoveItemError {
     NotFound,
 }
 
-pub fn execute(repo: &mut dyn Pool, request: Request) -> Result<Response, RemoveItemError> {
-    match repo.remove(request.id) {
+pub fn execute(pool: &mut dyn Pool, request: Request) -> Result<Response, RemoveItemError> {
+    match pool.remove(request.id) {
         Ok(item) => Ok(Response {
             id: item.id(),
             title: item.title().to_owned(),
@@ -54,10 +54,10 @@ mod tests {
 
         let mut map = HashMap::new();
         let _ = map.insert(id, item.clone());
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::from(map));
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::from(map));
 
         let request = Request { id };
-        let res = execute(repo.as_mut(), request);
+        let res = execute(pool.as_mut(), request);
 
         assert_eq!(
             res,
@@ -74,9 +74,9 @@ mod tests {
 
     #[test]
     fn it_should_return_not_found_error_when_the_target_does_not_exist() {
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::new());
         let request = Request { id: 0u64 };
-        let res = execute(repo.as_mut(), request);
+        let res = execute(pool.as_mut(), request);
         assert_eq!(res, Err(RemoveItemError::NotFound));
     }
 }

@@ -15,11 +15,11 @@ pub enum SetPriorityError {
     NotFound,
 }
 
-pub fn execute(repo: &mut dyn Pool, request: Request) -> Result<(), SetPriorityError> {
+pub fn execute(pool: &mut dyn Pool, request: Request) -> Result<(), SetPriorityError> {
     let Request { id, priority } = request;
     let priority = priority.try_into().map_err(|_| SetPriorityError::Invalid)?;
 
-    match repo.set_priority(id, priority) {
+    match pool.set_priority(id, priority) {
         Ok(()) => Ok(()),
         Err(RepositoryError::NotFound) => Err(SetPriorityError::NotFound),
     }
@@ -41,14 +41,14 @@ mod tests {
 
         let mut map = HashMap::new();
         let _ = map.insert(id, item);
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::from(map));
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::from(map));
 
         let request = Request { id, priority: 3 };
-        let res = execute(repo.as_mut(), request);
+        let res = execute(pool.as_mut(), request);
 
         assert_eq!(res, Ok(()));
 
-        if let Ok(item) = repo.get(id) {
+        if let Ok(item) = pool.get(id) {
             assert_eq!(3, item.priority().value());
         } else {
             unreachable!();
@@ -57,14 +57,14 @@ mod tests {
 
     #[test]
     fn it_should_return_not_found_error_when_the_target_does_not_exist() {
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::new());
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::new());
 
         let request = Request {
             id: 0u64,
             priority: Default::default(),
         };
 
-        let res = execute(repo.as_mut(), request);
+        let res = execute(pool.as_mut(), request);
         assert_eq!(res, Err(SetPriorityError::NotFound));
     }
 
@@ -75,14 +75,14 @@ mod tests {
 
         let mut map = HashMap::new();
         let _ = map.insert(id, item);
-        let mut repo: Box<dyn Pool> = Box::new(MemoryPool::from(map));
+        let mut pool: Box<dyn Pool> = Box::new(MemoryPool::from(map));
 
         let request = Request { id, priority: 10 };
-        let res = execute(repo.as_mut(), request);
+        let res = execute(pool.as_mut(), request);
 
         assert_eq!(res, Err(SetPriorityError::Invalid));
 
-        if let Ok(item) = repo.get(id) {
+        if let Ok(item) = pool.get(id) {
             assert_eq!(0, item.priority().value());
         } else {
             unreachable!();

@@ -24,8 +24,8 @@ pub enum GetItemError {
     NotFound,
 }
 
-pub fn execute(repo: &dyn Pool, request: Request) -> Result<Response, GetItemError> {
-    match repo.get(request.id) {
+pub fn execute(pool: &dyn Pool, request: Request) -> Result<Response, GetItemError> {
+    match pool.get(request.id) {
         Ok(item) => Ok(Response {
             id: item.id(),
             title: item.title().to_owned(),
@@ -54,10 +54,10 @@ mod tests {
 
         let mut map = HashMap::new();
         let _ = map.insert(id, item.clone());
-        let repo: Box<dyn Pool> = Box::new(MemoryPool::from(map));
+        let pool: Box<dyn Pool> = Box::new(MemoryPool::from(map));
 
         let request = Request { id };
-        let res = execute(repo.as_ref(), request);
+        let res = execute(pool.as_ref(), request);
 
         let response = Response {
             id,
@@ -72,15 +72,15 @@ mod tests {
 
         // Do twice
         let request = Request { id };
-        let res = execute(repo.as_ref(), request);
+        let res = execute(pool.as_ref(), request);
         assert_eq!(res, Ok(response));
     }
 
     #[test]
     fn it_should_return_not_found_error_when_the_target_does_not_exist() {
-        let repo: Box<dyn Pool> = Box::new(MemoryPool::new());
+        let pool: Box<dyn Pool> = Box::new(MemoryPool::new());
         let request = Request { id: 0u64 };
-        let res = execute(repo.as_ref(), request);
+        let res = execute(pool.as_ref(), request);
         assert_eq!(res, Err(GetItemError::NotFound));
     }
 }
