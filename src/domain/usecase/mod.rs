@@ -7,4 +7,5 @@ pub mod select;
 pub mod set_priority;
 
 pub mod add_id;
+pub mod complete_id;
 pub mod remove_id;

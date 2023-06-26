@@ -3,7 +3,7 @@ use snafu::prelude::*;
 use crate::repository::id::Pool;
 
 pub struct Request {
-    id: u64,
+    pub id: u64,
 }
 
 #[derive(Debug, PartialEq, Eq, Snafu)]

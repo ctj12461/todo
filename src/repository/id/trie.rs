@@ -83,9 +83,31 @@ impl Trie {
         Self::remove_impl(&mut self.root, &mut digits.into_iter())
     }
 
+    pub fn match_or_complete_suffix(&self, pattern: u64) -> Option<Vec<u64>> {
+        let mut digits = Self::split(pattern);
+        let mut node = &self.root;
+
+        for &digit in &digits {
+            node = node.next[*digit].as_deref()?;
+        }
+
+        if node.end {
+            Some(vec![Self::concat(&digits)])
+        } else {
+            let mut res = Vec::new();
+            Self::search_suffix(node, &mut res, &mut digits);
+
+            if !res.is_empty() {
+                Some(res)
+            } else {
+                None
+            }
+        }
+    }
+
     fn split(num: u64) -> Vec<Digit> {
         let mut num: usize = num as usize;
-        let mut digits: Vec<Digit> = Vec::with_capacity(64);
+        let mut digits: Vec<Digit> = Vec::with_capacity(20);
 
         if num == 0 {
             digits.push(0.try_into().unwrap());
@@ -107,13 +129,12 @@ impl Trie {
                     node.extend(digit);
                 }
 
-                let res = Self::insert_impl(node.next[*digit].as_deref_mut().unwrap(), digits);
-
-                if res {
+                if Self::insert_impl(node.next[*digit].as_deref_mut().unwrap(), digits) {
                     node.count += 1;
+                    true
+                } else {
+                    false
                 }
-
-                res
             }
             None => {
                 if !node.end {
@@ -151,6 +172,24 @@ impl Trie {
             }
         }
     }
+
+    fn search_suffix(node: &Node, res: &mut Vec<u64>, stack: &mut Vec<Digit>) {
+        if node.end {
+            res.push(Self::concat(stack));
+        }
+
+        for digit in (0..10).map(|d| Digit::try_from(d).unwrap()) {
+            if let Some(node) = node.next[*digit].as_deref() {
+                stack.push(digit);
+                Self::search_suffix(node, res, stack);
+                stack.pop();
+            }
+        }
+    }
+
+    fn concat(digits: &[Digit]) -> u64 {
+        digits.iter().fold(0, |acc, v| acc * 10 + v.0 as u64)
+    }
 }
 
 impl TriePool {
@@ -172,5 +211,28 @@ impl Pool for TriePool {
 
     fn remove(&mut self, id: u64) -> bool {
         self.trie.remove(id)
+    }
+
+    fn find(&self, pattern: u64) -> Option<Vec<u64>> {
+        self.trie.match_or_complete_suffix(pattern)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_should_complete_number_when_giving_prefix() {
+        let mut trie = Trie::new();
+        trie.insert(1234567);
+        trie.insert(1234568);
+        trie.insert(123457);
+        trie.insert(12345);
+        assert_eq!(trie.match_or_complete_suffix(12345), Some(vec![12345]));
+        assert_eq!(
+            trie.match_or_complete_suffix(123456),
+            Some(vec![1234567, 1234568])
+        );
     }
 }
