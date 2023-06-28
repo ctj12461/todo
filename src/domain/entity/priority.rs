@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter, Result as FmtResult};
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Default)]
@@ -28,5 +30,11 @@ impl TryFrom<i32> for Priority {
             Priority::MIN..=Priority::MAX => Ok(Priority(value)),
             _ => Err(()),
         }
+    }
+}
+
+impl Display for Priority {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        write!(f, "{}", self.0)
     }
 }

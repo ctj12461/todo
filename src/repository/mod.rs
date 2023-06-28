@@ -51,6 +51,16 @@ impl Repository {
         f(canceled.as_mut())
     }
 
+    pub fn apply_planned_ids<F, T>(&self, f: F) -> T
+    where
+        F: FnOnce(&mut dyn ItemPool, &mut dyn IdPool) -> T,
+    {
+        let data = &mut *self.inner.lock().unwrap();
+        let planned = &mut data.planned;
+        let ids = &mut data.ids;
+        f(planned.as_mut(), ids.as_mut())
+    }
+
     pub fn apply_planned_finished_canceled<F, T>(&self, f: F) -> T
     where
         F: FnOnce(&mut dyn ItemPool, &mut dyn ItemPool, &mut dyn ItemPool) -> T,
