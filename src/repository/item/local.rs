@@ -122,7 +122,12 @@ impl LocalPool {
     }
 
     fn read_file(path: PathBuf) -> Result<String, InitError> {
-        let file = match OpenOptions::new().read(true).create(true).open(path) {
+        let file = match OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(path)
+        {
             Ok(file) => file,
             Err(err) => return Err(InitError::Open { source: err }),
         };
