@@ -139,4 +139,8 @@ impl Pool for MemoryPool {
             Err(SetPriorityError::NotFound)
         }
     }
+
+    fn clear(&mut self) {
+        self.items.clear();
+    }
 }

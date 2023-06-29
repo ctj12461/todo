@@ -2,6 +2,7 @@ mod add;
 mod remove;
 
 pub mod add_tag;
+pub mod clean;
 pub mod get;
 pub mod plan;
 pub mod remove_tag;

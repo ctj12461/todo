@@ -27,6 +27,8 @@ pub trait Pool {
     fn remove_tag(&mut self, id: u64, tags: TagSet) -> Result<(), RemoveTagError>;
 
     fn set_priority(&mut self, id: u64, priority: Priority) -> Result<(), SetPriorityError>;
+
+    fn clear(&mut self);
 }
 
 pub enum AddError {

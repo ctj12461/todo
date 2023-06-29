@@ -142,7 +142,12 @@ impl LocalPool {
     }
 
     fn sync_file(path: PathBuf, json: String) -> Result<(), SyncError> {
-        let file = match OpenOptions::new().write(true).create(true).open(path) {
+        let file = match OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .create(true)
+            .open(path)
+        {
             Ok(file) => file,
             Err(err) => return Err(SyncError::Open { source: err }),
         };
@@ -215,6 +220,10 @@ impl Pool for LocalPool {
 
     fn set_priority(&mut self, id: u64, priority: Priority) -> Result<(), SetPriorityError> {
         self.pool.set_priority(id, priority)
+    }
+
+    fn clear(&mut self) {
+        self.pool.clear();
     }
 }
 
