@@ -11,9 +11,9 @@ use crate::repository::Repository;
 #[derive(Args)]
 pub struct AddArgs {
     #[arg(short = 's', long)]
-    title: String,
+    summary: String,
     #[arg(short = 'c', long, default_value_t = String::new())]
-    description: String,
+    content: String,
     #[arg(short = 'd', long, value_parser = parse_datetime)]
     deadline: NaiveDateTime,
     #[arg(short = 't', long = "tag")]
@@ -36,8 +36,8 @@ fn parse_priority(value: &str) -> Result<Priority, String> {
 
 pub fn run(repo: Arc<Repository>, args: AddArgs) -> Result<(), Box<dyn Error>> {
     let request = Request {
-        title: args.title,
-        description: args.description,
+        summary: args.summary,
+        content: args.content,
         deadline: args.deadline,
         tags: args.tags.into_iter().collect(),
         priority: args.priority.value(),

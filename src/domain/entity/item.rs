@@ -11,8 +11,8 @@ use crate::domain::entity::tag::{Tag, TagSet};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Item {
     id: u64,
-    title: String,
-    description: String,
+    summary: String,
+    content: String,
     deadline: NaiveDateTime,
     tags: TagSet,
     priority: Priority,
@@ -20,21 +20,21 @@ pub struct Item {
 
 impl Item {
     pub fn new(
-        title: &str,
-        description: &str,
+        summary: &str,
+        content: &str,
         deadline: NaiveDateTime,
         tags: HashSet<Tag>,
         priority: Priority,
     ) -> Self {
         let mut hasher = DefaultHasher::new();
-        title.hash(&mut hasher);
-        description.hash(&mut hasher);
+        summary.hash(&mut hasher);
+        content.hash(&mut hasher);
         deadline.hash(&mut hasher);
 
         Self {
             id: hasher.finish(),
-            title: title.to_owned(),
-            description: description.to_owned(),
+            summary: summary.to_owned(),
+            content: content.to_owned(),
             deadline,
             tags,
             priority,
@@ -45,7 +45,7 @@ impl Item {
     pub fn new_test() -> Self {
         Item::new(
             "Test",
-            "This is description.",
+            "This is content.",
             NaiveDateTime::parse_from_str("2023-06-17 23:20:00", "%Y-%m-%d %H:%M:%S").unwrap(),
             TagSet::new(),
             0.try_into().unwrap(),
@@ -58,13 +58,13 @@ impl Item {
     }
 
     #[inline]
-    pub fn title(&self) -> &str {
-        &self.title
+    pub fn summary(&self) -> &str {
+        &self.summary
     }
 
     #[inline]
-    pub fn description(&self) -> &str {
-        &self.description
+    pub fn content(&self) -> &str {
+        &self.content
     }
 
     #[inline]
@@ -111,10 +111,10 @@ impl Item {
 impl PartialOrd for Item {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        (&self.deadline, &other.priority, self.title.as_str()).partial_cmp(&(
+        (&self.deadline, &other.priority, self.summary.as_str()).partial_cmp(&(
             &other.deadline,
             &self.priority,
-            other.title.as_str(),
+            other.summary.as_str(),
         ))
     }
 }

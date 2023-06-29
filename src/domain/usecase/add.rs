@@ -6,8 +6,8 @@ use crate::repository::item::{AddError, Pool};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
-    pub title: String,
-    pub description: String,
+    pub summary: String,
+    pub content: String,
     pub deadline: NaiveDateTime,
     pub tags: TagSet,
     pub priority: i32,
@@ -20,7 +20,7 @@ pub struct Response {
 
 #[derive(Debug, PartialEq, Eq, Snafu)]
 pub enum AddItemError {
-    #[snafu(display("`title` may not be empty and `priority` should be in [-3, 3]"))]
+    #[snafu(display("`summary` may not be empty and `priority` should be in [-3, 3]"))]
     Invalid,
     #[snafu(display("Two same items may not exist"))]
     Conflict,
@@ -28,13 +28,13 @@ pub enum AddItemError {
 
 pub fn execute(pool: &mut dyn Pool, request: Request) -> Result<Response, AddItemError> {
     let Request {
-        title,
-        description,
+        summary,
+        content,
         deadline,
         tags,
         priority,
     } = request;
-    ensure!(!title.is_empty(), InvalidSnafu);
+    ensure!(!summary.is_empty(), InvalidSnafu);
 
     let priority = match Priority::try_from(priority) {
         Ok(v) => v,
@@ -42,8 +42,8 @@ pub fn execute(pool: &mut dyn Pool, request: Request) -> Result<Response, AddIte
     };
 
     let res = pool.add(Item::new(
-        title.as_str(),
-        description.as_str(),
+        summary.as_str(),
+        content.as_str(),
         deadline,
         tags,
         priority,
@@ -69,8 +69,8 @@ mod tests {
         let id = item.id();
 
         let request = Request {
-            title: item.title().to_owned(),
-            description: item.description().to_owned(),
+            summary: item.summary().to_owned(),
+            content: item.content().to_owned(),
             deadline: *item.deadline(),
             tags: item.tags().clone(),
             priority: item.priority().value(),
@@ -82,10 +82,10 @@ mod tests {
     }
 
     #[test]
-    fn it_should_return_invalid_error_when_title_is_empty() {
+    fn it_should_return_invalid_error_when_summary_is_empty() {
         let request = Request {
-            title: String::new(),
-            description: String::from("This is description."),
+            summary: String::new(),
+            content: String::from("This is content."),
             deadline: get_deadline(),
             tags: HashSet::new(),
             priority: 0i32,
@@ -99,8 +99,8 @@ mod tests {
     #[test]
     fn it_should_return_invalid_error_when_priority_is_out_of_bound() {
         let request = Request {
-            title: String::from("Test"),
-            description: String::from("This is description."),
+            summary: String::from("Test"),
+            content: String::from("This is content."),
             deadline: get_deadline(),
             tags: HashSet::new(),
             priority: 10i32,
@@ -114,8 +114,8 @@ mod tests {
     #[test]
     fn it_should_return_conflict_error_when_adding_two_same_items() {
         let request = Request {
-            title: String::from("Test"),
-            description: String::from("This is description."),
+            summary: String::from("Test"),
+            content: String::from("This is content."),
             deadline: get_deadline(),
             tags: HashSet::new(),
             priority: 0i32,

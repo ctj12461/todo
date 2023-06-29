@@ -31,8 +31,8 @@ mod tests {
         let id = item.id();
 
         let request = Request {
-            title: item.title().to_owned(),
-            description: item.description().to_owned(),
+            summary: item.summary().to_owned(),
+            content: item.content().to_owned(),
             deadline: *item.deadline(),
             tags: item.tags().clone(),
             priority: item.priority().value(),

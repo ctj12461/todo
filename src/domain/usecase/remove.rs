@@ -11,8 +11,8 @@ pub struct Request {
 #[derive(Debug, PartialEq, Eq)]
 pub struct Response {
     pub id: u64,
-    pub title: String,
-    pub description: String,
+    pub summary: String,
+    pub content: String,
     pub deadline: NaiveDateTime,
     pub tags: TagSet,
     pub priority: Priority,
@@ -28,8 +28,8 @@ pub fn execute(pool: &mut dyn Pool, request: Request) -> Result<Response, Remove
     match pool.remove(request.id) {
         Ok(item) => Ok(Response {
             id: item.id(),
-            title: item.title().to_owned(),
-            description: item.description().to_owned(),
+            summary: item.summary().to_owned(),
+            content: item.content().to_owned(),
             deadline: *item.deadline(),
             tags: item.tags().clone(),
             priority: item.priority().clone(),
@@ -63,8 +63,8 @@ mod tests {
             res,
             Ok(Response {
                 id,
-                title: item.title().to_owned(),
-                description: item.description().to_owned(),
+                summary: item.summary().to_owned(),
+                content: item.content().to_owned(),
                 deadline: *item.deadline(),
                 tags: item.tags().clone(),
                 priority: item.priority().clone(),

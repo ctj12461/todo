@@ -11,8 +11,8 @@ pub struct Request {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Response {
     pub id: u64,
-    pub title: String,
-    pub description: String,
+    pub summary: String,
+    pub content: String,
     pub deadline: NaiveDateTime,
     pub tags: TagSet,
     pub priority: Priority,
@@ -28,8 +28,8 @@ pub fn execute(pool: &dyn Pool, request: Request) -> Result<Response, GetItemErr
     match pool.get(request.id) {
         Ok(item) => Ok(Response {
             id: item.id(),
-            title: item.title().to_owned(),
-            description: item.description().to_owned(),
+            summary: item.summary().to_owned(),
+            content: item.content().to_owned(),
             deadline: *item.deadline(),
             tags: item.tags().clone(),
             priority: item.priority().clone(),
@@ -61,8 +61,8 @@ mod tests {
 
         let response = Response {
             id,
-            title: item.title().to_owned(),
-            description: item.description().to_owned(),
+            summary: item.summary().to_owned(),
+            content: item.content().to_owned(),
             deadline: *item.deadline(),
             tags: item.tags().clone(),
             priority: item.priority().clone(),

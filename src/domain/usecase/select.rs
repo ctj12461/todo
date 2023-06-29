@@ -145,9 +145,9 @@ mod tests {
         assert_eq!(res, Err(SelectItemError::NotFound));
     }
 
-    fn new(title: &str, time: &str, priority: i32, tags: &[&str]) -> Item {
+    fn new(summary: &str, time: &str, priority: i32, tags: &[&str]) -> Item {
         Item::new(
-            title,
+            summary,
             "",
             NaiveDateTime::parse_from_str(time, "%Y-%m-%d %H:%M:%S").unwrap(),
             tags.iter().map(|&t| t.to_owned()).collect(),

@@ -19,8 +19,8 @@ use super::{
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct RawItem {
-    pub title: String,
-    pub description: String,
+    pub summary: String,
+    pub content: String,
     pub deadline: NaiveDateTime,
     pub tags: TagSet,
     pub priority: Priority,
@@ -60,8 +60,8 @@ pub enum SyncError {
 
 impl Hash for RawItem {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.title.hash(state);
-        self.description.hash(state);
+        self.summary.hash(state);
+        self.content.hash(state);
         self.deadline.hash(state);
     }
 }
@@ -69,8 +69,8 @@ impl Hash for RawItem {
 impl From<RawItem> for Item {
     fn from(value: RawItem) -> Self {
         Item::new(
-            value.title.as_str(),
-            value.description.as_str(),
+            value.summary.as_str(),
+            value.content.as_str(),
             value.deadline,
             value.tags,
             value.priority,
@@ -81,8 +81,8 @@ impl From<RawItem> for Item {
 impl From<Item> for RawItem {
     fn from(value: Item) -> Self {
         Self {
-            title: value.title().to_owned(),
-            description: value.description().to_owned(),
+            summary: value.summary().to_owned(),
+            content: value.content().to_owned(),
             deadline: *value.deadline(),
             tags: value.tags().clone(),
             priority: value.priority().clone(),
@@ -227,22 +227,22 @@ mod tests {
         let json = serde_json::json!({
             "items": [
                 {
-                    "title": "1",
-                    "description": "Test 1",
+                    "summary": "1",
+                    "content": "Test 1",
                     "deadline": "2023-06-17T23:20:00",
                     "tags": [],
                     "priority": 1
                 },
                 {
-                    "title": "2",
-                    "description": "Test 2",
+                    "summary": "2",
+                    "content": "Test 2",
                     "deadline": "2023-06-17T23:20:00",
                     "tags": [],
                     "priority": 2
                 },
                 {
-                    "title": "3",
-                    "description": "Test 3",
+                    "summary": "3",
+                    "content": "Test 3",
                     "deadline": "2023-06-17T23:20:00",
                     "tags": [],
                     "priority": 3
@@ -254,22 +254,22 @@ mod tests {
         if let Ok(data) = LocalPool::deserialize(json) {
             let items = [
                 RawItem {
-                    title: "1".to_owned(),
-                    description: "Test 1".to_owned(),
+                    summary: "1".to_owned(),
+                    content: "Test 1".to_owned(),
                     deadline: get_deadline(),
                     tags: TagSet::new(),
                     priority: 1.try_into().unwrap(),
                 },
                 RawItem {
-                    title: "2".to_owned(),
-                    description: "Test 2".to_owned(),
+                    summary: "2".to_owned(),
+                    content: "Test 2".to_owned(),
                     deadline: get_deadline(),
                     tags: TagSet::new(),
                     priority: 2.try_into().unwrap(),
                 },
                 RawItem {
-                    title: "3".to_owned(),
-                    description: "Test 3".to_owned(),
+                    summary: "3".to_owned(),
+                    content: "Test 3".to_owned(),
                     deadline: get_deadline(),
                     tags: TagSet::new(),
                     priority: 3.try_into().unwrap(),

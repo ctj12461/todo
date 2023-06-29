@@ -21,8 +21,8 @@ pub fn execute(
     let _ = remove_id::execute(ids, request);
 
     let request = AddRequest {
-        title: item.title,
-        description: item.description,
+        summary: item.summary,
+        content: item.content,
         deadline: item.deadline,
         tags: item.tags,
         priority: item.priority.value(),
