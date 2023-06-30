@@ -5,19 +5,19 @@ use crate::domain::entity::{Item, TagSet};
 use crate::repository::item::{Pool, SelectError};
 
 pub struct Request {
-    tags: TagSet,
-    before: Option<NaiveDateTime>,
-    after: Option<NaiveDateTime>,
+    pub tags: TagSet,
+    pub before: Option<NaiveDateTime>,
+    pub after: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Response {
-    items: Vec<Item>,
+    pub items: Vec<Item>,
 }
 
 #[derive(Debug, PartialEq, Eq, Snafu)]
 pub enum SelectItemError {
-    #[snafu(display("Invalid time range [before, after]"))]
+    #[snafu(display("Invalid time range [after, before]"))]
     Invalid,
     #[snafu(display("No suitable item is found"))]
     NotFound,

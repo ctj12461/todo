@@ -10,15 +10,15 @@ use crate::repository::Repository;
 
 #[derive(Args)]
 pub struct AddArgs {
-    #[arg(short = 's', long)]
+    #[arg(short, long)]
     summary: String,
-    #[arg(short = 'c', long, default_value_t = String::new())]
+    #[arg(short, long, default_value_t = String::new())]
     content: String,
-    #[arg(short = 'd', long, value_parser = parse_datetime)]
+    #[arg(short, long, value_parser = parse_datetime)]
     deadline: NaiveDateTime,
-    #[arg(short = 't', long = "tag")]
+    #[arg(short, long = "tag")]
     tags: Vec<String>,
-    #[arg(short = 'p', long, default_value_t = 0.try_into().unwrap(), value_parser = parse_priority)]
+    #[arg(short, long, default_value_t = 0.try_into().unwrap(), value_parser = parse_priority)]
     priority: Priority,
 }
 

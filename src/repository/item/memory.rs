@@ -69,7 +69,7 @@ impl Pool for MemoryPool {
         before: Option<chrono::NaiveDateTime>,
         after: Option<chrono::NaiveDateTime>,
     ) -> Result<Vec<Item>, SelectError> {
-        if before.is_some() && after.is_some() && before.unwrap() > after.unwrap() {
+        if before.is_some() && after.is_some() && before.unwrap() < after.unwrap() {
             return Err(SelectError::Invalid);
         }
 
